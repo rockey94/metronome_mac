@@ -7,7 +7,7 @@ const App = () => {
   const [tempo, setTempo] = useState(120);
   const [scale, setScale] = useState("major");
   const [rootNote, setRootNote] = useState("C"); // for note name
-  const [rootFrequency, setRootFrequency] = useState(256);
+  const [rootFrequency, setRootFrequency] = useState(261.63);
   // const [rootNote, setRootNote] = useState(256); // Middle C
   const beatsPerMeasure = 8;
   const beatIndicators = useRef([]);
@@ -51,18 +51,18 @@ const App = () => {
   ];
 
   const noteToNum = {
-    A: 0,
-    "A#": 1,
-    B: 2,
-    C: 3,
-    "C#": 4,
-    D: 5,
-    "D#": 6,
-    E: 7,
-    F: 8,
-    "F#": 9,
-    G: 10,
-    "G#": 11,
+    C: 261.63,
+    "C#": 277.18,
+    D: 293.66,
+    "D#": 311.13,
+    E: 329.63,
+    F: 349.23,
+    "F#": 369.99,
+    G: 392.0,
+    "G#": 415.3,
+    A: 440.0,
+    "A#": 466.16,
+    B: 493.88,
   };
   const generateScale = (root, intervals) => {
     return intervals.map((interval) => root * Math.pow(2, interval / 12));
@@ -118,9 +118,7 @@ const App = () => {
   }, [count, tempo]);
 
   function noteToFrequency(note) {
-    const a4 = 440; // frequency of A4
-    const n = noteToNum[note];
-    return a4 * Math.pow(2, (n - 9) / 12); // subtract 9 because A4 is the 9th note in the scale
+    return noteToNum[note];
   }
 
   const handleRootNoteChange = (e) => {
@@ -128,6 +126,7 @@ const App = () => {
     const frequency = noteToFrequency(selectedNote);
     setRootNote(selectedNote); // update note name
     setRootFrequency(frequency); // update frequency
+    setCount(-1);
   };
 
   function getRandomColor() {
