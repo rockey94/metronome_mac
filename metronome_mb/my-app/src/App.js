@@ -9,8 +9,11 @@ const App = () => {
   const [rootNote, setRootNote] = useState("C"); // for note name
   const [rootFrequency, setRootFrequency] = useState(261.63);
   // const [rootNote, setRootNote] = useState(256); // Middle C
-  const beatsPerMeasure = 8;
   const beatIndicators = useRef([]);
+  const [beatsPerMeasure, setBeatsPerMeasure] = useState(0);
+
+  const [beatCount, setBeatCount] = useState(0); // Initialize to 0
+  const [scaleNotes, setScaleNotes] = useState([]);
 
   const scales = {
     major: [0, 2, 4, 5, 7, 9, 11, 12],
@@ -67,6 +70,66 @@ const App = () => {
   const generateScale = (root, intervals) => {
     return intervals.map((interval) => root * Math.pow(2, interval / 12));
   };
+
+  useEffect(() => {
+    // Initialize beatIndicators based on beatsPerMeasure
+    beatIndicators.current = Array.from({ length: beatCount }, () => null);
+  }, [beatCount]);
+
+  useEffect(() => {
+    // Initialize beatIndicators based on beatsPerMeasure
+    beatIndicators.current = Array.from({ length: beatCount }, () => null);
+  }, [beatCount]);
+
+  useEffect(() => {
+    const scaleNotes = scales[scale];
+    const repeatedScaleNotes = [];
+    let index = 0;
+    while (repeatedScaleNotes.length < beatsPerMeasure) {
+      repeatedScaleNotes.push(scaleNotes[index % scaleNotes.length]);
+      index++;
+    }
+    setScaleNotes(repeatedScaleNotes);
+    setBeatCount(beatsPerMeasure);
+    setCount(-1);
+    setBeatsPerMeasure(scales[scale].length);
+  }, [scale, beatsPerMeasure]);
+
+  useEffect(() => {
+    // Calculate beatsPerMeasure based on the scale
+    const scaleNotes = scales[scale];
+    setBeatsPerMeasure(scaleNotes.length);
+  }, [scale]);
+
+  useEffect(() => {
+    // Initialize beatIndicators based on beatsPerMeasure
+    beatIndicators.current = Array.from(
+      { length: beatsPerMeasure },
+      () => null
+    );
+  }, [beatsPerMeasure]);
+  useEffect(() => {
+    // Reset playing to false and then back to true when the scale changes
+    setPlaying(false);
+
+    const scaleNotes = scales[scale];
+    const repeatedScaleNotes = [];
+    let index = 0;
+    while (repeatedScaleNotes.length < beatsPerMeasure) {
+      repeatedScaleNotes.push(scaleNotes[index % scaleNotes.length]);
+      index++;
+    }
+    setScaleNotes(repeatedScaleNotes);
+    setBeatCount(beatsPerMeasure);
+    setCount(-1);
+    setBeatsPerMeasure(scales[scale].length);
+
+    // After setting up the new scale, set playing back to true
+    setTimeout(() => {
+      setPlaying(true);
+    }, 100); // Delay to ensure proper resetting
+  }, [scale]);
+
   useEffect(() => {
     const audioContext = new (window.AudioContext ||
       window.webkitAudioContext)();
@@ -101,7 +164,7 @@ const App = () => {
 
   useEffect(() => {
     beatIndicators.current.forEach((indicator, i) => {
-      if (i === count) {
+      if (indicator) {
         indicator.animate(
           [
             { backgroundColor: "grey" },
@@ -148,7 +211,7 @@ const App = () => {
           : (count + 1) % beatsPerMeasure}
       </p> */}
       <div>
-        {[...Array(beatsPerMeasure)].map((_, i) => (
+        {[...Array(beatCount)].map((_, i) => (
           <div
             ref={(el) => (beatIndicators.current[i] = el)}
             key={i}
@@ -159,10 +222,10 @@ const App = () => {
               height: "20px",
               borderRadius: "50%",
               backgroundColor:
-                (count + 1) % beatsPerMeasure === i ? getRandomColor() : "grey",
+                (count + 1) % beatCount === i ? getRandomColor() : "grey",
               border: "1px solid black",
               animation:
-                (count + 1) % beatsPerMeasure === i
+                (count + 1) % beatCount === i
                   ? "combined 1s linear infinite"
                   : "none",
             }}
@@ -221,11 +284,6 @@ const App = () => {
           <option value="doubleHarmonic">Double Harmonic</option>
           <option value="enigmatic">Enigmatic</option>
         </select>
-      </div>
-      <div style={{ marginTop: "20px", fontSize: "20px", fontWeight: "bold" }}>
-        {" "}
-        {/* New visual indicator for scale */}
-        Current Scale: {scale.charAt(0).toUpperCase() + scale.slice(1)}
       </div>
     </div>
   );
