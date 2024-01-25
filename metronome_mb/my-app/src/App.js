@@ -120,7 +120,7 @@ const App = () => {
               border: "1px solid black",
               animation:
                 (count + 1) % beatsPerMeasure === i
-                  ? "flash 1s linear infinite"
+                  ? "combined 1s linear infinite"
                   : "none",
             }}
           />

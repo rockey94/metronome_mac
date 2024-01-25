@@ -29,7 +29,7 @@
     transform: scale(1);
   }
   50% {
-    transform: scale(1.5);
+    transform: scale(2);
   }
   100% {
     transform: scale(1);
@@ -81,4 +81,32 @@ body {
   100% {
     background-color: grey;
   } */
+}
+
+@keyframes combined {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 5px #ff0000, 0 0 10px #ff0000, 0 0 15px #ff0000,
+      0 0 20px #ff0000;
+  }
+  100% {
+    box-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000, 0 0 30px #ff0000,
+      0 0 40px #ff0000;
+  }
+}
+.circle {
+  animation: eyeCatching 2s ease-in-out infinite, combined 2s ease-in-out,
+    glow 2s ease-in-out infinite;
+  animation-delay: 1s;
 }
