@@ -1,5 +1,3 @@
-
-
 .App-logo {
   height: 40vmin;
   pointer-events: none;
@@ -54,16 +52,8 @@
   animation: scaleHighlight 2s linear infinite;
 }
 
-.App {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
-
 body {
+  background-color: #000000;
   margin: 0;
   padding: 0;
 }
@@ -75,4 +65,20 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
+  color: #ffffff;
+  /* This sets the text color to white */
+}
+
+@keyframes flash {
+  /* 0% {
+    background-color: grey;
+  }
+
+  50% {
+    background-color: red;
+  }
+
+  100% {
+    background-color: grey;
+  } */
 }

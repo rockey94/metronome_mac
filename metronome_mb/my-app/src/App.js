@@ -86,15 +86,24 @@ const App = () => {
     });
   }, [count, tempo]);
 
+  function getRandomColor() {
+    const letters = "0123456789ABCDEF";
+    let color = "#";
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  }
+
   return (
     <div className="App">
       <h1>Metronome</h1>
-      <p>
+      {/* <p>
         Current Beat:{" "}
         {(count + 1) % beatsPerMeasure === 0
           ? beatsPerMeasure
           : (count + 1) % beatsPerMeasure}
-      </p>
+      </p> */}
       <div>
         {[...Array(beatsPerMeasure)].map((_, i) => (
           <div
@@ -106,8 +115,13 @@ const App = () => {
               width: "20px",
               height: "20px",
               borderRadius: "50%",
-              backgroundColor: "grey",
+              backgroundColor:
+                (count + 1) % beatsPerMeasure === i ? getRandomColor() : "grey",
               border: "1px solid black",
+              animation:
+                (count + 1) % beatsPerMeasure === i
+                  ? "flash 1s linear infinite"
+                  : "none",
             }}
           />
         ))}
