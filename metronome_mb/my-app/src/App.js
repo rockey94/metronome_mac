@@ -6,7 +6,9 @@ const App = () => {
   const [count, setCount] = useState(0); // Initialize count to 0 instead of -1
   const [tempo, setTempo] = useState(120);
   const [scale, setScale] = useState("major");
-  const [rootNote, setRootNote] = useState(440); // A4
+  const [rootNote, setRootNote] = useState("C"); // for note name
+  const [rootFrequency, setRootFrequency] = useState(256);
+  // const [rootNote, setRootNote] = useState(256); // Middle C
   const beatsPerMeasure = 8;
   const beatIndicators = useRef([]);
 
@@ -33,6 +35,35 @@ const App = () => {
     enigmatic: [0, 1, 4, 6, 8, 10, 12],
   };
 
+  const notes = [
+    "C",
+    "C#",
+    "D",
+    "D#",
+    "E",
+    "F",
+    "F#",
+    "G",
+    "G#",
+    "A",
+    "A#",
+    "B",
+  ];
+
+  const noteToNum = {
+    A: 0,
+    "A#": 1,
+    B: 2,
+    C: 3,
+    "C#": 4,
+    D: 5,
+    "D#": 6,
+    E: 7,
+    F: 8,
+    "F#": 9,
+    G: 10,
+    "G#": 11,
+  };
   const generateScale = (root, intervals) => {
     return intervals.map((interval) => root * Math.pow(2, interval / 12));
   };
@@ -45,7 +76,7 @@ const App = () => {
       if (playing) {
         setCount((prevCount) => {
           const nextCount = (prevCount + 1) % beatsPerMeasure;
-          const currentScale = generateScale(rootNote, scales[scale]);
+          const currentScale = generateScale(rootFrequency, scales[scale]); // Use rootFrequency instead of rootNote
           if (Number.isFinite(currentScale[nextCount])) {
             oscillator = audioContext.createOscillator();
             oscillator.frequency.value = currentScale[nextCount];
@@ -66,7 +97,7 @@ const App = () => {
         oscillator.stop();
       }
     };
-  }, [playing, tempo, scale, rootNote]);
+  }, [playing, tempo, scale, rootFrequency]); // Use rootFrequency in the dependency array
 
   useEffect(() => {
     beatIndicators.current.forEach((indicator, i) => {
@@ -85,6 +116,19 @@ const App = () => {
       }
     });
   }, [count, tempo]);
+
+  function noteToFrequency(note) {
+    const a4 = 440; // frequency of A4
+    const n = noteToNum[note];
+    return a4 * Math.pow(2, (n - 9) / 12); // subtract 9 because A4 is the 9th note in the scale
+  }
+
+  const handleRootNoteChange = (e) => {
+    const selectedNote = e.target.value;
+    const frequency = noteToFrequency(selectedNote);
+    setRootNote(selectedNote); // update note name
+    setRootFrequency(frequency); // update frequency
+  };
 
   function getRandomColor() {
     const letters = "0123456789ABCDEF";
@@ -134,7 +178,6 @@ const App = () => {
       >
         {playing ? "Stop" : "Start"}
       </button>
-
       <div>
         <label>Tempo: </label>
         <input
@@ -142,14 +185,18 @@ const App = () => {
           value={tempo}
           onChange={(e) => setTempo(e.target.value)}
         />
-      </div>
+      </div>{" "}
       <div>
-        <label>Root Note: </label>
-        <input
-          type="number"
-          value={rootNote}
-          onChange={(e) => setRootNote(e.target.value)}
-        />
+        <label>
+          Root Note:
+          <select value={rootNote} onChange={handleRootNoteChange}>
+            {notes.map((note, index) => (
+              <option key={index} value={note}>
+                {note}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
       <div>
         <label>Scale: </label>
