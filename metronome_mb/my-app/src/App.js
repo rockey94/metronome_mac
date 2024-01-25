@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import "./App.css";
 
 const App = () => {
   const [playing, setPlaying] = useState(false);
-  const [count, setCount] = useState(-1);
+  const [count, setCount] = useState(0); // Initialize count to 0 instead of -1
   const [tempo, setTempo] = useState(120);
   const [scale, setScale] = useState("major");
   const [rootNote, setRootNote] = useState(440); // A4
   const beatsPerMeasure = 8;
+  const beatIndicators = useRef([]);
 
   const scales = {
     major: [0, 2, 4, 5, 7, 9, 11, 12],
@@ -35,7 +36,6 @@ const App = () => {
   const generateScale = (root, intervals) => {
     return intervals.map((interval) => root * Math.pow(2, interval / 12));
   };
-
   useEffect(() => {
     const audioContext = new (window.AudioContext ||
       window.webkitAudioContext)();
@@ -68,13 +68,37 @@ const App = () => {
     };
   }, [playing, tempo, scale, rootNote]);
 
+  useEffect(() => {
+    beatIndicators.current.forEach((indicator, i) => {
+      if (i === count) {
+        indicator.animate(
+          [
+            { backgroundColor: "grey" },
+            { backgroundColor: "blue" },
+            { backgroundColor: "grey" },
+          ],
+          {
+            duration: (60 / tempo) * 1000 - 10, // Adjust the duration
+            easing: "steps(1, end)",
+          }
+        );
+      }
+    });
+  }, [count, tempo]);
+
   return (
-    <div>
+    <div className="App">
       <h1>Metronome</h1>
-      <p>Current Beat: {count + 1}</p>
+      <p>
+        Current Beat:{" "}
+        {(count + 1) % beatsPerMeasure === 0
+          ? beatsPerMeasure
+          : (count + 1) % beatsPerMeasure}
+      </p>
       <div>
         {[...Array(beatsPerMeasure)].map((_, i) => (
           <div
+            ref={(el) => (beatIndicators.current[i] = el)}
             key={i}
             style={{
               display: "inline-block",
@@ -82,24 +106,21 @@ const App = () => {
               width: "20px",
               height: "20px",
               borderRadius: "50%",
-              backgroundColor: i === count ? "black" : "white",
+              backgroundColor: "grey",
               border: "1px solid black",
-              animation: i === count ? "beat 0.5s linear" : undefined,
             }}
           />
         ))}
       </div>
       <button
         onClick={() => {
-          setPlaying((prevPlaying) => {
-            const nextPlaying = !prevPlaying;
-            setCount(nextPlaying ? 0 : -1);
-            return nextPlaying;
-          });
+          setCount(-1); // Initialize count to 0
+          setPlaying((prevPlaying) => !prevPlaying);
         }}
       >
         {playing ? "Stop" : "Start"}
       </button>
+
       <div>
         <label>Tempo: </label>
         <input
