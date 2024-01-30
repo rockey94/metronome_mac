@@ -8,7 +8,6 @@ const App = () => {
   const [scale, setScale] = useState("major");
   const [rootNote, setRootNote] = useState("C"); // for note name
   const [rootFrequency, setRootFrequency] = useState(261.63);
-  // const [rootNote, setRootNote] = useState(256); // Middle C
   const beatIndicators = useRef([]);
   const [beatsPerMeasure, setBeatsPerMeasure] = useState(0);
 
@@ -37,6 +36,19 @@ const App = () => {
     doubleHarmonic: [0, 1, 4, 5, 7, 8, 11, 12],
     enigmatic: [0, 1, 4, 6, 8, 10, 12],
   };
+
+  const generateRandomScaleNotes = () => {
+    const scaleOptions = Object.keys(scales);
+    const randomScale =
+      scaleOptions[Math.floor(Math.random() * scaleOptions.length)];
+
+    // Update the scale state directly
+    setScale(randomScale);
+  };
+
+  useEffect(() => {
+    generateRandomScaleNotes();
+  }, [scale, beatsPerMeasure]);
 
   const notes = [
     "C",
@@ -72,14 +84,11 @@ const App = () => {
   };
 
   useEffect(() => {
-    // Initialize beatIndicators based on beatsPerMeasure
-    beatIndicators.current = Array.from({ length: beatCount }, () => null);
-  }, [beatCount]);
-
-  useEffect(() => {
-    // Initialize beatIndicators based on beatsPerMeasure
-    beatIndicators.current = Array.from({ length: beatCount }, () => null);
-  }, [beatCount]);
+    beatIndicators.current = Array.from(
+      { length: beatsPerMeasure },
+      () => null
+    );
+  }, [beatsPerMeasure]);
 
   useEffect(() => {
     const scaleNotes = scales[scale];
@@ -96,20 +105,18 @@ const App = () => {
   }, [scale, beatsPerMeasure]);
 
   useEffect(() => {
-    // Calculate beatsPerMeasure based on the scale
     const scaleNotes = scales[scale];
     setBeatsPerMeasure(scaleNotes.length);
   }, [scale]);
 
   useEffect(() => {
-    // Initialize beatIndicators based on beatsPerMeasure
     beatIndicators.current = Array.from(
       { length: beatsPerMeasure },
       () => null
     );
   }, [beatsPerMeasure]);
+
   useEffect(() => {
-    // Reset playing to false and then back to true when the scale changes
     setPlaying(false);
 
     const scaleNotes = scales[scale];
@@ -124,7 +131,6 @@ const App = () => {
     setCount(-1);
     setBeatsPerMeasure(scales[scale].length);
 
-    // After setting up the new scale, set playing back to true
     setTimeout(() => {
       setPlaying(true);
     }, 100); // Delay to ensure proper resetting
@@ -201,17 +207,13 @@ const App = () => {
     return color;
   }
 
+  const totalBeats = beatIndicators.current.length;
+
   return (
     <div className="App">
       <h1>Metronome</h1>
-      {/* <p>
-        Current Beat:{" "}
-        {(count + 1) % beatsPerMeasure === 0
-          ? beatsPerMeasure
-          : (count + 1) % beatsPerMeasure}
-      </p> */}
       <div>
-        {[...Array(beatCount)].map((_, i) => (
+        {[...Array(totalBeats)].map((_, i) => (
           <div
             ref={(el) => (beatIndicators.current[i] = el)}
             key={i}
@@ -222,10 +224,10 @@ const App = () => {
               height: "20px",
               borderRadius: "50%",
               backgroundColor:
-                (count + 1) % beatCount === i ? getRandomColor() : "grey",
+                (count + 1) % totalBeats === i ? getRandomColor() : "grey",
               border: "1px solid black",
               animation:
-                (count + 1) % beatCount === i
+                (count + 1) % totalBeats === i
                   ? "combined 1s linear infinite"
                   : "none",
             }}
@@ -284,6 +286,7 @@ const App = () => {
           <option value="doubleHarmonic">Double Harmonic</option>
           <option value="enigmatic">Enigmatic</option>
         </select>
+        <button onClick={generateRandomScaleNotes}>Randomize Riff</button>
       </div>
     </div>
   );
