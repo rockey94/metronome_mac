@@ -38,19 +38,6 @@ const App = () => {
     enigmatic: [0, 1, 4, 6, 8, 10, 12],
   };
 
-  const generateRandomScaleNotes = () => {
-    const scaleOptions = Object.keys(scales);
-    const randomScale =
-      scaleOptions[Math.floor(Math.random() * scaleOptions.length)];
-
-    // Update the scale state directly
-    setScale(randomScale);
-  };
-
-  useEffect(() => {
-    generateRandomScaleNotes();
-  }, [scale, beatsPerMeasure]);
-
   const notes = [
     "C",
     "C#",
@@ -138,42 +125,46 @@ const App = () => {
       setPlaying(true);
     }, 100); // Delay to ensure proper resetting
   }, [scale]);
+
   useEffect(() => {
     const audioContext = new (window.AudioContext ||
       window.webkitAudioContext)();
     let oscillator = null;
+    let randomFrequencies = [];
+    let count = 0;
 
     const interval = setInterval(() => {
       if (playing) {
-        if (mode === "regular") {
-          setCount((prevCount) => {
-            const nextCount = (prevCount + 1) % beatsPerMeasure;
-            const currentScale = generateScale(rootFrequency, scales[scale]);
-            if (Number.isFinite(currentScale[nextCount])) {
-              oscillator = audioContext.createOscillator();
-              oscillator.frequency.value = currentScale[nextCount];
-              oscillator.connect(audioContext.destination);
-              oscillator.start();
-              oscillator.stop(audioContext.currentTime + 0.1);
-            } else {
-              console.error("Invalid frequency:", currentScale[nextCount]);
-            }
-            return nextCount;
-          });
-        } else if (mode === "random") {
-          const currentScale = generateScale(rootFrequency, scales[scale]);
-          const randomIndex = Math.floor(Math.random() * currentScale.length);
-          const randomFrequency = currentScale[randomIndex];
+        const currentScale = generateScale(rootFrequency, scales[scale]);
 
-          if (Number.isFinite(randomFrequency)) {
-            oscillator = audioContext.createOscillator();
-            oscillator.frequency.value = randomFrequency;
-            oscillator.connect(audioContext.destination);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.1);
+        if (mode === "regular") {
+          count = (count + 1) % beatsPerMeasure;
+          setCount(count); // Update the beat indicators
+          const frequency = currentScale[count];
+
+          if (Number.isFinite(frequency)) {
+            oscillator = createAndStartOscillator(audioContext, frequency);
           } else {
-            console.error("Invalid frequency:", randomFrequency);
+            console.error("Invalid frequency:", frequency);
           }
+        } else if (mode === "random") {
+          let frequency;
+          if (randomFrequencies.length < 8) {
+            const randomIndex = Math.floor(Math.random() * currentScale.length);
+            frequency = currentScale[randomIndex];
+            randomFrequencies.push(frequency);
+          } else {
+            frequency = randomFrequencies[count % 8];
+          }
+
+          if (Number.isFinite(frequency)) {
+            oscillator = createAndStartOscillator(audioContext, frequency);
+          } else {
+            console.error("Invalid frequency:", frequency);
+          }
+
+          count = (count + 1) % 8;
+          setCount(count % beatsPerMeasure); // Update the beat indicators
         }
       }
     }, (60 / tempo) * 1000);
@@ -186,6 +177,22 @@ const App = () => {
     };
   }, [playing, tempo, scale, rootFrequency, mode, beatsPerMeasure]);
 
+  function createAndStartOscillator(audioContext, frequency) {
+    const oscillator = audioContext.createOscillator();
+    oscillator.frequency.value = frequency;
+    oscillator.connect(audioContext.destination);
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.1);
+    return oscillator;
+  }
+  function createAndStartOscillator(audioContext, frequency) {
+    const oscillator = audioContext.createOscillator();
+    oscillator.frequency.value = frequency;
+    oscillator.connect(audioContext.destination);
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.1);
+    return oscillator;
+  }
   useEffect(() => {
     beatIndicators.current.forEach((indicator, i) => {
       if (indicator) {
@@ -304,7 +311,6 @@ const App = () => {
           <option value="doubleHarmonic">Double Harmonic</option>
           <option value="enigmatic">Enigmatic</option>
         </select>
-        <button onClick={generateRandomScaleNotes}>Randomize Riff</button>
         <button onClick={toggleMode}>
           {mode === "regular" ? "Random Frequency Mode" : "Regular Mode"}
         </button>
