@@ -126,6 +126,15 @@ const App = () => {
     }, 100); // Delay to ensure proper resetting
   }, [scale]);
 
+  function getRandomColor() {
+    const letters = "0123456789ABCDEF";
+    let color = "#";
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  }
+
   useEffect(() => {
     const audioContext = new (window.AudioContext ||
       window.webkitAudioContext)();
@@ -194,22 +203,28 @@ const App = () => {
     return oscillator;
   }
   useEffect(() => {
-    beatIndicators.current.forEach((indicator, i) => {
-      if (indicator) {
-        indicator.animate(
-          [
-            { backgroundColor: "grey" },
-            { backgroundColor: "blue" },
-            { backgroundColor: "grey" },
-          ],
-          {
-            duration: (60 / tempo) * 1000 - 10, // Adjust the duration
-            easing: "steps(1, end)",
-          }
-        );
-      }
-    });
+    if (beatIndicators.current[count]) {
+      const indicator = beatIndicators.current[count];
+      const animationDuration = (60 / tempo) * 1000 - 10; // Adjust the duration
+      const animationColor = getRandomColor();
+
+      indicator.style.transition = `background-color ${animationDuration}ms`;
+      indicator.style.backgroundColor = animationColor;
+
+      setTimeout(() => {
+        indicator.style.backgroundColor = "grey";
+      }, animationDuration);
+    }
   }, [count, tempo]);
+
+  function getRandomColor() {
+    const letters = "0123456789ABCDEF";
+    let color = "#";
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  }
 
   function noteToFrequency(note) {
     return noteToNum[note];
@@ -242,7 +257,7 @@ const App = () => {
               backgroundColor: "grey",
               border: "1px solid black",
               animation:
-                (count + 1) % totalBeats === i
+                count % totalBeats === i
                   ? "combined 1s linear infinite"
                   : "none",
             }}
