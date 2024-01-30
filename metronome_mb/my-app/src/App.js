@@ -223,15 +223,6 @@ const App = () => {
     setCount(-1);
   };
 
-  function getRandomColor() {
-    const letters = "0123456789ABCDEF";
-    let color = "#";
-    for (let i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-  }
-
   const totalBeats = beatIndicators.current.length;
 
   return (
@@ -248,8 +239,7 @@ const App = () => {
               width: "20px",
               height: "20px",
               borderRadius: "50%",
-              backgroundColor:
-                (count + 1) % totalBeats === i ? getRandomColor() : "grey",
+              backgroundColor: "grey",
               border: "1px solid black",
               animation:
                 (count + 1) % totalBeats === i
@@ -267,14 +257,18 @@ const App = () => {
       >
         {playing ? "Stop" : "Start"}
       </button>
-      <div>
-        <label>Tempo: </label>
+      <div className="tempo" style={{ position: "relative" }}>
         <input
-          type="number"
+          type="range"
+          min="50"
+          max="1000"
+          step="50"
           value={tempo}
           onChange={(e) => setTempo(e.target.value)}
+          style={{ color: "blue", position: "absolute", zIndex: "1" }}
         />
-      </div>{" "}
+        <div style={{ position: "relative", zIndex: "2" }}>Tempo: {tempo}</div>
+      </div>
       <div>
         <label>
           Root Note:
