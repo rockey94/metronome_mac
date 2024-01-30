@@ -140,7 +140,7 @@ const App = () => {
       window.webkitAudioContext)();
     let oscillator = null;
     let randomFrequencies = [];
-    let count = 0;
+    let count = mode === "regular" ? -1 : -1;
 
     const interval = setInterval(() => {
       if (playing) {
