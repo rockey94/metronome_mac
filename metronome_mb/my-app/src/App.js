@@ -10,12 +10,12 @@ const App = () => {
   const [rootFrequency, setRootFrequency] = useState(261.63);
   const beatIndicators = useRef([]);
   const [beatsPerMeasure, setBeatsPerMeasure] = useState(0);
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)(); // Define audio context here
 
   const [beatCount, setBeatCount] = useState(0); // Initialize to 0
   const [scaleNotes, setScaleNotes] = useState([]);
   const [mode, setMode] = useState("regular"); // Default mode is 'regular'
   const [randomFrequencies, setRandomFrequencies] = useState([]); // State variable for random frequencies
-
   const scales = {
     major: [0, 2, 4, 5, 7, 9, 11, 12],
     minor: [0, 2, 3, 5, 7, 8, 10, 12],
@@ -82,6 +82,10 @@ const App = () => {
   }, [beatsPerMeasure]);
 
   useEffect(() => {
+    setRandomFrequencies([]);
+  }, [mode, scale, rootNote]);
+
+  useEffect(() => {
     const scaleNotes = scales[scale];
     const repeatedScaleNotes = [];
     let index = 0;
@@ -92,7 +96,6 @@ const App = () => {
     setScaleNotes(repeatedScaleNotes);
     setBeatCount(beatsPerMeasure);
     setCount(-1);
-    setBeatsPerMeasure(scales[scale].length);
   }, [scale, beatsPerMeasure]);
 
   useEffect(() => {
@@ -121,11 +124,8 @@ const App = () => {
     setBeatCount(beatsPerMeasure);
     setCount(-1);
     setBeatsPerMeasure(scales[scale].length);
-
-    // setTimeout(() => {
-    //   setPlaying(true);
-    // }, 100); // Delay to ensure proper resetting
-  }, [scale]);
+    setRandomFrequencies([]); // Clear randomFrequencies when mode, scale, or rootNote changes
+  }, [scale, rootNote, mode]);
 
   function getRandomColor() {
     const letters = "0123456789ABCDEF";
@@ -136,15 +136,12 @@ const App = () => {
     return color;
   }
 
+  // Inside the useEffect where you play tones in "random frequency mode"
   useEffect(() => {
-    const audioContext = new (window.AudioContext ||
-      window.webkitAudioContext)();
-    let oscillator = null;
-    let count = -1;
-
-    const interval = setInterval(() => {
-      if (playing) {
-        const currentScale = generateScale(rootFrequency, scales[scale]);
+    if (playing) {
+      const currentScale = generateScale(rootFrequency, scales[scale]);
+      let count = -1; // Initialize count
+      const interval = setInterval(() => {
         count = (count + 1) % beatsPerMeasure;
         setCount(count); // Update the beat indicators
 
@@ -162,22 +159,39 @@ const App = () => {
           } else {
             frequency = randomFrequencies[count % 8];
           }
+          // Apply flashing effect only to the currently played beat indicator
+          if (Number.isFinite(frequency)) {
+            const noteIndex = currentScale.indexOf(frequency);
+            const indicator = beatIndicators.current[noteIndex];
+
+            if (indicator) {
+              const animationDuration = (60 / tempo) * 1000 - 10;
+              const animationColor = getRandomColor();
+
+              indicator.style.transition = `background-color ${animationDuration}ms`;
+              indicator.style.backgroundColor = animationColor;
+
+              setTimeout(() => {
+                indicator.style.backgroundColor = "lightgray";
+              }, animationDuration);
+            }
+          } else {
+            console.error("Invalid frequency:", frequency);
+          }
         }
 
         if (Number.isFinite(frequency)) {
-          oscillator = createAndStartOscillator(audioContext, frequency);
+          const oscillator = createAndStartOscillator(audioContext, frequency);
+          setTimeout(() => {
+            oscillator.stop();
+          }, (60 / tempo) * 1000);
         } else {
           console.error("Invalid frequency:", frequency);
         }
-      }
-    }, (60 / tempo) * 1000);
+      }, (60 / tempo) * 1000);
 
-    return () => {
-      clearInterval(interval);
-      if (oscillator) {
-        oscillator.stop();
-      }
-    };
+      return () => clearInterval(interval);
+    }
   }, [
     playing,
     tempo,
@@ -245,27 +259,37 @@ const App = () => {
   return (
     <div className="App">
       <h1>Metronome</h1>
-      <div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          marginTop: "20px",
+        }}
+      >
         {[...Array(totalBeats)].map((_, i) => (
           <div
-            ref={(el) => (beatIndicators.current[i] = el)}
             key={i}
+            ref={(ref) => (beatIndicators.current[i] = ref)}
             style={{
-              display: "inline-block",
-              margin: "0 5px",
-              width: "20px",
-              height: "20px",
-              borderRadius: "50%",
-              backgroundColor: "grey",
+              width: "50px",
+              height: "50px",
               border: "1px solid black",
-              animation:
-                count % totalBeats === i
-                  ? "combined 1s linear infinite"
-                  : "none",
+              borderRadius: "50%",
+              textAlign: "center",
+              lineHeight: "50px",
+              backgroundColor:
+                count % totalBeats === i ? getRandomColor() : "lightgray",
+              transition: "background-color 0.2s ease",
+              marginRight: "10px",
+              fontSize: "1.2em",
+              fontWeight: "bold",
             }}
-          />
+          >
+            {notes[scaleNotes[i] % 12]}
+          </div>
         ))}
       </div>
+
       <button
         onClick={() => {
           setCount(-1); // Initialize count to 0
