@@ -14,6 +14,7 @@ const App = () => {
   const [beatCount, setBeatCount] = useState(0); // Initialize to 0
   const [scaleNotes, setScaleNotes] = useState([]);
   const [mode, setMode] = useState("regular"); // Default mode is 'regular'
+  const [randomFrequencies, setRandomFrequencies] = useState([]); // State variable for random frequencies
 
   const scales = {
     major: [0, 2, 4, 5, 7, 9, 11, 12],
@@ -121,9 +122,9 @@ const App = () => {
     setCount(-1);
     setBeatsPerMeasure(scales[scale].length);
 
-    setTimeout(() => {
-      setPlaying(true);
-    }, 100); // Delay to ensure proper resetting
+    // setTimeout(() => {
+    //   setPlaying(true);
+    // }, 100); // Delay to ensure proper resetting
   }, [scale]);
 
   function getRandomColor() {
@@ -139,41 +140,34 @@ const App = () => {
     const audioContext = new (window.AudioContext ||
       window.webkitAudioContext)();
     let oscillator = null;
-    let randomFrequencies = [];
-    let count = mode === "regular" ? -1 : -1;
+    let count = -1;
 
     const interval = setInterval(() => {
       if (playing) {
         const currentScale = generateScale(rootFrequency, scales[scale]);
+        count = (count + 1) % beatsPerMeasure;
+        setCount(count); // Update the beat indicators
 
+        let frequency;
         if (mode === "regular") {
-          count = (count + 1) % beatsPerMeasure;
-          setCount(count); // Update the beat indicators
-          const frequency = currentScale[count];
-
-          if (Number.isFinite(frequency)) {
-            oscillator = createAndStartOscillator(audioContext, frequency);
-          } else {
-            console.error("Invalid frequency:", frequency);
-          }
+          frequency = currentScale[count];
         } else if (mode === "random") {
-          let frequency;
           if (randomFrequencies.length < 8) {
             const randomIndex = Math.floor(Math.random() * currentScale.length);
             frequency = currentScale[randomIndex];
-            randomFrequencies.push(frequency);
+            setRandomFrequencies((prevFrequencies) => [
+              ...prevFrequencies,
+              frequency,
+            ]);
           } else {
             frequency = randomFrequencies[count % 8];
           }
+        }
 
-          if (Number.isFinite(frequency)) {
-            oscillator = createAndStartOscillator(audioContext, frequency);
-          } else {
-            console.error("Invalid frequency:", frequency);
-          }
-
-          count = (count + 1) % 8;
-          setCount(count % beatsPerMeasure); // Update the beat indicators
+        if (Number.isFinite(frequency)) {
+          oscillator = createAndStartOscillator(audioContext, frequency);
+        } else {
+          console.error("Invalid frequency:", frequency);
         }
       }
     }, (60 / tempo) * 1000);
@@ -184,7 +178,15 @@ const App = () => {
         oscillator.stop();
       }
     };
-  }, [playing, tempo, scale, rootFrequency, mode, beatsPerMeasure]);
+  }, [
+    playing,
+    tempo,
+    scale,
+    rootFrequency,
+    mode,
+    beatsPerMeasure,
+    randomFrequencies,
+  ]);
 
   function createAndStartOscillator(audioContext, frequency) {
     const oscillator = audioContext.createOscillator();
